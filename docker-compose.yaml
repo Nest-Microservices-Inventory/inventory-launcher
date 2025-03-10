@@ -17,11 +17,11 @@ services:
       context: ./client-gateway
       dockerfile: dockerfile
     ports:
-      - 8000:8000
+      - ${CLIENT_GATEWAY_PORT}:${CLIENT_GATEWAY_PORT}
     environment:
-      - PORT=8000
-      - NATS_SERVERS=nats://nats-server:4222
-
+      PORT: ${CLIENT_GATEWAY_PORT}
+      NATS_SERVERS: ${NATS_SERVERS}
+      
   # ===== PRODUCTS ======
   products-database:
     container_name: products-database
@@ -45,8 +45,8 @@ services:
       context: ./products-ms
       dockerfile: dockerfile
     environment:
-      - NATS_SERVERS=nats://nats-server:4222
-      - DATABASE_URL=postgresql://admin:password@products-database:5432/products?schema=public
+      NATS_SERVERS: ${NATS_SERVERS}
+      DATABASE_URL: ${PRODUCTS_DATABASE_URL}
 
   # ===== ORDERS ======
   orders-database:
@@ -72,8 +72,8 @@ services:
       context: ./orders-ms
       dockerfile: dockerfile
     environment:
-      - NATS_SERVERS=nats://nats-server:4222
-      - DATABASE_URL=mysql://root:password@orders-database:3306/orders?schema=public
+      NATS_SERVERS: ${NATS_SERVERS}
+      DATABASE_URL: ${ORDERS_DATABASE_URL}
 
   # ==== AUTENTICACION ====
   auth-microservice:
@@ -82,6 +82,6 @@ services:
       dockerfile: dockerfile
 
     environment:
-      DATABASE_URL: "mongodb+srv://admin:AdminMicroservicios@auth.kwrkl.mongodb.net/auth"
-      NATS_SERVERS: nats://nats-server:4222
-      JWT_SECRET: ALVARO696
+      DATABASE_URL: ${AUTH_DATABASE_URL}
+      NATS_SERVERS: ${NATS_SERVERS}
+      JWT_SECRET: ${AUTH_JWT_SECRET}
