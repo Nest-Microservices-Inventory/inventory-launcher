@@ -13,7 +13,7 @@ services:
   # === CLIENT GATEWAY ===
   client-gateway:
     container_name: client-gateway
-    build: 
+    build:
       context: ./client-gateway
       dockerfile: dockerfile
     ports:
@@ -23,35 +23,33 @@ services:
       - NATS_SERVERS=nats://nats-server:4222
 
   # ===== PRODUCTS ======
-  productsDb:
-    container_name: productsDb
+  products-database:
+    container_name: products-database
     image: postgres:13.5
 
     environment:
       POSTGRES_DB: products
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
-    
+
     ports:
       - 5432:5432
 
     volumes:
       - ./products-ms/postgres:/var/lib/postgresql/data
 
-  #products-ms:
-  #  depends_on:
-  #    - productsDb
-  #  container_name: products-ms
-  #  build: 
-  #    context: ./products-ms
-  #    dockerfile: dockerfile
-  #  environment:
-  #    - NATS_SERVERS=nats://nats-server:4222
-  #    - DATABASE_URL=postgresql://admin:password@productsDb:5432/products?schema=public
+  products-microservice:
+    depends_on:
+      - products-database
+    build:
+      context: ./products-ms
+      dockerfile: dockerfile
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=postgresql://admin:password@products-database:5432/products?schema=public
 
-  
   # ===== ORDERS ======
-  ordersDB:
+  orders-database:
     image: mysql
 
     restart: always
@@ -66,3 +64,24 @@ services:
 
     volumes:
       - ./orders-ms/mysql:/var/lib/mysql
+
+  orders-microservice:
+    depends_on:
+      - orders-database
+    build:
+      context: ./orders-ms
+      dockerfile: dockerfile
+    environment:
+      - NATS_SERVERS=nats://nats-server:4222
+      - DATABASE_URL=mysql://root:password@orders-database:3306/orders?schema=public
+
+  # ==== AUTENTICACION ====
+  auth-microservice:
+    build:
+      context: ./auth-ms
+      dockerfile: dockerfile
+
+    environment:
+      DATABASE_URL: "mongodb+srv://admin:AdminMicroservicios@auth.kwrkl.mongodb.net/auth"
+      NATS_SERVERS: nats://nats-server:4222
+      JWT_SECRET: ALVARO696
