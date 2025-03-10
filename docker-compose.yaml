@@ -1,0 +1,68 @@
+version: '3'
+
+services:
+
+  # ===== NATS SERVER ======
+  nats-server:
+    container_name: nats
+    image: nats:latest
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  # === CLIENT GATEWAY ===
+  client-gateway:
+    container_name: client-gateway
+    build: 
+      context: ./client-gateway
+      dockerfile: dockerfile
+    ports:
+      - 8000:8000
+    environment:
+      - PORT=8000
+      - NATS_SERVERS=nats://nats-server:4222
+
+  # ===== PRODUCTS ======
+  productsDb:
+    container_name: productsDb
+    image: postgres:13.5
+
+    environment:
+      POSTGRES_DB: products
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    
+    ports:
+      - 5432:5432
+
+    volumes:
+      - ./products-ms/postgres:/var/lib/postgresql/data
+
+  #products-ms:
+  #  depends_on:
+  #    - productsDb
+  #  container_name: products-ms
+  #  build: 
+  #    context: ./products-ms
+  #    dockerfile: dockerfile
+  #  environment:
+  #    - NATS_SERVERS=nats://nats-server:4222
+  #    - DATABASE_URL=postgresql://admin:password@productsDb:5432/products?schema=public
+
+  
+  # ===== ORDERS ======
+  ordersDB:
+    image: mysql
+
+    restart: always
+    environment:
+      MYSQL_USER: admin
+      MYSQL_DATABASE: orders
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+
+    ports:
+      - 3307:3306
+
+    volumes:
+      - ./orders-ms/mysql:/var/lib/mysql
